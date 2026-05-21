@@ -34,6 +34,33 @@ async function run() {
         const db = client.db('contest_db');
         const contestsCollection = db.collection('contests');
         const winnersCollection = db.collection('winners');
+        const submissionsCollection = db.collection('submissions');
+        const registrationsCollection = db.collection('registrations');
+
+
+        app.post("/registrations", async (req, res) => {
+            const data = req.body;
+            const result = await registrationsCollection.insertOne(data);
+            res.send(result);
+        });
+
+        app.get("/registrations", async (req, res) => {
+            const { email, contestId } = req.query;
+
+            const query = {};
+
+            if (email) {
+                query.userEmail = email;
+            }
+
+            if (contestId) {
+                query.contestId = contestId;
+            }
+
+            const result = await registrationsCollection.find(query).toArray();
+
+            res.send(result);
+        });
 
         //Prticipants increase APIs
         app.patch("/contests/increase/:id", async (req, res) => {
@@ -44,6 +71,12 @@ async function run() {
                 { $inc: { participants: 1 } }
             );
 
+            res.send(result);
+        });
+
+        //Submission task
+        app.post("/submissions", async (req, res) => {
+            const result = await submissionsCollection.insertOne(req.body);
             res.send(result);
         });
 
