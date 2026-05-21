@@ -35,6 +35,17 @@ async function run() {
         const contestsCollection = db.collection('contests');
         const winnersCollection = db.collection('winners');
 
+        //Prticipants increase APIs
+        app.patch("/contests/increase/:id", async (req, res) => {
+            const id = req.params.id;
+
+            const result = await contestsCollection.updateOne(
+                { _id: new ObjectId(id) },
+                { $inc: { participants: 1 } }
+            );
+
+            res.send(result);
+        });
 
         //winners APIs
 
