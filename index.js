@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 
 //middleware
 app.use(cors());
@@ -40,6 +40,17 @@ async function run() {
 
 
         //users APIs
+
+
+        app.get("/users", async (req, res) => {
+            try {
+                const users = await usersCollection.find().toArray();
+                res.send(users);
+            } catch (error) {
+                res.status(500).send({ message: "Failed to get users" });
+            }
+        });
+
         app.get("/users/:email", async (req, res) => {
             const email = req.params.email;
             const result = await usersCollection.findOne({ email });
@@ -162,6 +173,14 @@ async function run() {
 
 
         app.post("/winners", async (req, res) => {
+            const { creator_email } = req.body;
+
+            const user = await usersCollection.findOne({ email: creator_email });
+
+            if (user?.role !== "creator" && user?.role !== "admin") {
+                return res.status(403).send({ message: "Forbidden" });
+            }
+
             try {
                 const {
                     contestId,
@@ -198,6 +217,7 @@ async function run() {
                     message: "Winner declared successfully",
                     data: result,
                 });
+
             } catch (error) {
                 res.status(500).send({ error: error.message });
             }
@@ -250,6 +270,19 @@ async function run() {
             res.send(result);
         })
 
+        app.post('/contests', async (req, res) => {
+            const { creator_email } = req.body;
+
+            const user = await usersCollection.findOne({ email: creator_email });
+
+            if (user?.role !== "creator" && user?.role !== "admin") {
+                return res.status(403).send({ message: "Forbidden" });
+            }
+
+            const result = await contestsCollection.insertOne(req.body);
+            res.send(result);
+        });
+
 
         app.patch('/contests/:id', async (req, res) => {
             const id = req.params.id;
@@ -266,6 +299,19 @@ async function run() {
             const result = await contestsCollection.updateOne(query, update);
             res.send(result);
         })
+
+
+        app.patch("/users/role/:email", async (req, res) => {
+            const email = req.params.email;
+            const { role } = req.body;
+
+            const result = await usersCollection.updateOne(
+                { email },
+                { $set: { role } }
+            );
+
+            res.send(result);
+        });
 
 
         app.delete('/contests/:id', async (req, res) => {
