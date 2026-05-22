@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 //middleware
 app.use(cors());
@@ -29,7 +29,7 @@ app.get('/', (req, res) => {
 async function run() {
 
     try {
-        await client.connect();
+        // await client.connect();
 
         const db = client.db('contest_db');
         const contestsCollection = db.collection('contests');
@@ -175,6 +175,7 @@ async function run() {
                     contestId,
                     winner_name,
                     winner_image,
+                    winner_email,
                     prize,
                     declaredAt: new Date(),
                 };
@@ -275,8 +276,8 @@ async function run() {
         })
 
 
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // await client.db("admin").command({ ping: 1 });
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
     }
 
