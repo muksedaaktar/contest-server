@@ -36,8 +36,68 @@ async function run() {
         const winnersCollection = db.collection('winners');
         const submissionsCollection = db.collection('submissions');
         const registrationsCollection = db.collection('registrations');
+        const usersCollection = db.collection('users');
 
 
+        //users APIs
+        app.get("/users/:email", async (req, res) => {
+            const email = req.params.email;
+            const result = await usersCollection.findOne({ email });
+            res.send(result);
+        });
+
+
+        app.post("/users", async (req, res) => {
+            const user = req.body;
+
+            const query = { email: user.email };
+
+            const existingUser = await usersCollection.findOne(query);
+
+            if (existingUser) {
+                return res.send({ message: "User already exists" });
+            }
+
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
+        });
+
+
+        app.patch("/users/:email", async (req, res) => {
+            const email = req.params.email;
+            const update = req.body;
+
+            const result = await usersCollection.updateOne(
+                { email },
+                { $set: update },
+                { upsert: true }
+            );
+
+            res.send(result);
+        });
+
+        app.get("/users/stats/:email", async (req, res) => {
+            const email = req.params.email;
+
+            const participated = await registrationsCollection.countDocuments({
+                userEmail: email
+            });
+
+            const won = await winnersCollection.countDocuments({
+                winner_email: email
+            });
+
+            const winPercentage =
+                participated === 0 ? 0 : (won / participated) * 100;
+
+            res.send({
+                participated,
+                won,
+                winPercentage
+            });
+        });
+
+        //contests registration APIs
         app.post("/registrations", async (req, res) => {
             const data = req.body;
             const result = await registrationsCollection.insertOne(data);
@@ -107,6 +167,7 @@ async function run() {
                     contestId,
                     winner_name,
                     winner_image,
+                    winner_email,
                     prize,
                 } = req.body;
 
